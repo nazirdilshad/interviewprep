@@ -1,0 +1,13 @@
+{
+  "name": "microsoft-interview-prep",
+  "version": "1.0.0",
+  "description": "Shared Microsoft LeetCode interview prep tracker",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0"
+  }
+}

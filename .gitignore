@@ -1,0 +1,20 @@
+# Byte-compiled
+__pycache__/
+*.py[cod]
+
+# Virtual env
+.venv/
+venv/
+node_modules/
+
+# OS
+.DS_Store
+
+# Data (progress is per-deployment)
+progress.json
+
+# Generated plan
+microsoft_daily_plan.csv
+
+# Old files
+open_in_sheets.html
