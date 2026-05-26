@@ -669,16 +669,43 @@ function parseCSV(){
   [...patterns].sort().forEach(p=>{const o=document.createElement('option');o.value=p;o.textContent=p;pf.appendChild(o)});
 }
 
+const BLOB_URL='https://jsonblob.com/api/jsonBlob/019e646f-3d75-7f0e-9f4b-064a1a5fa04a';
+let saveTimeout=null;
+
 async function loadProgress(){
-  try{const r=await fetch('/api/progress');progress=await r.json()}catch(e){progress=JSON.parse(localStorage.getItem('progress')||'{}')}
+  // Load from localStorage immediately for fast render
+  progress=JSON.parse(localStorage.getItem('progress')||'{}');
   updateStats();
+  // Then sync from cloud in background
+  try{
+    const r=await fetch(BLOB_URL,{headers:{'Content-Type':'application/json'}});
+    if(r.ok){
+      const cloud=await r.json();
+      // Merge: cloud wins for any key present in cloud
+      for(const pid in cloud){
+        progress[pid]=Object.assign(progress[pid]||{},cloud[pid]);
+      }
+      localStorage.setItem('progress',JSON.stringify(progress));
+      updateStats();renderAll();
+    }
+  }catch(e){console.log('Cloud sync failed, using local cache')}
+}
+
+function saveToCloud(){
+  // Debounce saves to avoid rate limits
+  clearTimeout(saveTimeout);
+  saveTimeout=setTimeout(async()=>{
+    try{
+      await fetch(BLOB_URL,{method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(progress)});
+    }catch(e){console.log('Cloud save failed, saved locally')}
+  },500);
 }
 
 async function toggleSolved(problemId,user,checked){
   progress[problemId]=progress[problemId]||{};
   progress[problemId][user]=checked;
   localStorage.setItem('progress',JSON.stringify(progress));
-  try{await fetch('/api/progress',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({problemId,user,solved:checked})})}catch(e){}
+  saveToCloud();
   updateStats();
   showToast(checked?`✅ ${user==='dilshad'?'Dilshad':'Yash'} solved #${problemId}!`:`↩️ #${problemId} unmarked`);
 }
